@@ -32,7 +32,7 @@ boolean low_lvl = false;
 boolean high_lvl = false;
 boolean save_to_flash_flag = false;
 int moisture = 0;
-int moisture_set = 65;
+int moisture_set = 65;                                          // default moisture setpoint
 unsigned long bo1_start_time = 0;
 unsigned long impulse_ml = 500;                                 // one impulse amount
 unsigned long impulse_time = 38;                                // impulse time
@@ -123,11 +123,13 @@ void setup(){
 }
 
 void loop(){
+  // zapis nastawy wilgotności do eeprom
   if(save_to_flash_flag == true && millis() > save_to_flash_after){
     EEPROM.put(710,moisture_set);
     save_to_flash_flag = false;
   }
 
+  // wylaczenie pompki po przepompowaniu dawki
   if(bo_state[0] == true && (millis() - bo1_start_time) >= (impulse_time * impulse_ml)){
     BO_RESET();
   }
