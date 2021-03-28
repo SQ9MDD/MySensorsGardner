@@ -28,25 +28,29 @@ boolean bo_state[2] = {false, false};
 boolean low_lvl = false;
 boolean high_lvl = false;
 int moisture = 0;
+int moisture_set = 65;
 unsigned long bo1_start_time = 0;
 unsigned long impulse_ml = 500;                                 // one impulse amount
 unsigned long impulse_time = 38;                                // impulse time
 unsigned long last_moisture_send = 0;                           // moisture sending timer
 unsigned long last_moisture_read = 0;                           // pomiar co 6 sekund * 10 pomiarów w filtrze daje nam średnia z minuty
 
-// library
+// mysensors library
 #include <MySensors.h>
+
 MyMessage msgBO1(CHILD_ID_BO1, V_STATUS);
 MyMessage msgBI1(CHILD_ID_BI1, V_STATUS);
 MyMessage msgBI2(CHILD_ID_BI2, V_STATUS);
 MyMessage msgAI1(CHILD_ID_AI1, V_LEVEL);
 
 void BO_SET() {
-  bo_state[0] = true; 
-  bo1_start_time = millis(); 
-  send(msgBO1.set(true,false));
-  delay(100);
-  digitalWrite(bo1, LOW);
+  if(low_lvl == false){
+    bo_state[0] = true; 
+    bo1_start_time = millis(); 
+    send(msgBO1.set(true,false));
+    delay(100);
+    digitalWrite(bo1, LOW);
+  }
 }
 
 void BO_RESET() {
@@ -69,7 +73,7 @@ void presentation(){
 void receive(const MyMessage &message){
   switch (message.sensor) {
       case 1:
-        if (message.getBool() == true && low_lvl == false){ 
+        if (message.getBool() == true){ 
           BO_SET();
         }else{
           BO_RESET();
@@ -89,7 +93,7 @@ void setup(){
   if(digitalRead(bi1) == HIGH){low_lvl == false;}else{low_lvl = true;}
   if(digitalRead(bi2) == HIGH){high_lvl == false;}else{high_lvl = true;}
 
-  int moisture_percent = map(analogRead(ai1),70,1023,100,0);
+  int moisture_percent = map(analogRead(ai1),670,277,0,100);
   moisture = constrain(moisture_percent,0,100);
 
   send(msgBO1.set(false,1));
@@ -124,9 +128,9 @@ void loop(){
   }
 
     // przycisk
-  if(digitalRead(bi3) == LOW && low_lvl == false){
+  if(digitalRead(bi3) == LOW){
     delay(10);
-    if(digitalRead(bi3) == LOW && low_lvl == false){
+    if(digitalRead(bi3) == LOW){
       BO_SET();
     }
   }
@@ -144,5 +148,9 @@ void loop(){
   if(bo_state[0] == false && (millis() - last_moisture_send) > 300000 ){
     send(msgAI1.set(moisture, 0));
     last_moisture_send = millis(); 
+    // w tym miejscu podlewamy jeśli pomiar jest mniejszy niż nastawa %
+    if(moisture < moisture_set){
+      BO_SET();
+    }
   }
 }
