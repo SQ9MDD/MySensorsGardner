@@ -176,7 +176,7 @@ void loop(){
     //Serial.println(moisture);
     last_moisture_read = millis();   
   }
-  //ok ? ok ok ???
+  // VSC test 003
   // raz na 5 minut wysyłka do domoticza i  wrazie potrzeby podlewanie automatyczne
   if(bo_state[0] == false && (millis() - last_moisture_send) > 300000 ){
     send(msgAI1.set(moisture, 0));
