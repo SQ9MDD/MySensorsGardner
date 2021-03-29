@@ -177,7 +177,7 @@ void loop(){
     last_moisture_read = millis();   
   }
   
-  // test
+  // test 2 @SQ9MDD
   // raz na 5 minut wysyłka do domoticza i  wrazie potrzeby podlewanie automatyczne
   if(bo_state[0] == false && (millis() - last_moisture_send) > 300000 ){
     send(msgAI1.set(moisture, 0));
