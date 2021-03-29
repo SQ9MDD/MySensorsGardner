@@ -91,6 +91,7 @@ void receive(const MyMessage &message){
         }else{
           BO_RESET();
         }
+      break;
       case 5:
         percent = message.getInt(); 
         moisture_set = constrain(percent,moisture_low_limit,moisture_hi_limit);
@@ -110,8 +111,12 @@ void setup(){
   pinMode(bi3,INPUT_PULLUP);
   pinMode(ai1,INPUT);
 
-  if(digitalRead(bi1) == HIGH){low_lvl == false;}else{low_lvl = true;}
-  if(digitalRead(bi2) == HIGH){high_lvl == false;}else{high_lvl = true;}
+  if(digitalRead(bi1) == LOW){
+    low_lvl = true;
+  }
+  if(digitalRead(bi2) == LOW){
+    high_lvl = true;
+  }
 
   int moisture_percent = map(analogRead(ai1),670,277,0,100);
   moisture = constrain(moisture_percent,0,100);
@@ -133,6 +138,7 @@ void loop(){
   if(save_to_flash_flag == true && millis() > save_to_flash_after){
     EEPROM.put(710,moisture_set);
     save_to_flash_flag = false;
+    send(msgAO1.set(moisture_set));
   }
 
   // wylaczenie pompki po przepompowaniu dawki
@@ -176,7 +182,7 @@ void loop(){
     //Serial.println(moisture);
     last_moisture_read = millis();   
   }
-  // VSC test 003
+  
   // raz na 5 minut wysyłka do domoticza i  wrazie potrzeby podlewanie automatyczne
   if(bo_state[0] == false && (millis() - last_moisture_send) > 300000 ){
     send(msgAI1.set(moisture, 0));
