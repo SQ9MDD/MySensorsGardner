@@ -31,10 +31,12 @@ boolean bo_state[2] = {false, false};
 boolean low_lvl = false;
 boolean high_lvl = false;
 boolean save_to_flash_flag = false;
+int moisture_low_limit = 10;
+int moisture_hi_limit = 80;
 int moisture = 0;
 int moisture_set = 65;                                          // default moisture setpoint
 unsigned long bo1_start_time = 0;
-unsigned long impulse_ml = 500;                                 // one impulse amount
+unsigned long impulse_ml = 250;                                 // one impulse amount 
 unsigned long impulse_time = 38;                                // impulse time
 unsigned long last_moisture_send = 0;                           // moisture sending timer
 unsigned long last_moisture_read = 0;                           // pomiar co 6 sekund * 10 pomiarów w filtrze daje nam średnia z minuty
@@ -50,12 +52,15 @@ MyMessage msgAI1(CHILD_ID_AI1, V_LEVEL);
 MyMessage msgAO1(CHILD_ID_AO1, V_PERCENTAGE);
 
 void BO_SET() {
-  if(low_lvl == false){
+  if(low_lvl == false && moisture > moisture_low_limit && moisture < moisture_set){
     bo_state[0] = true; 
     bo1_start_time = millis(); 
     send(msgBO1.set(true,false));
     delay(100);
     digitalWrite(bo1, LOW);
+  }else{
+    delay(200);
+    send(msgBO1.set(false,false));
   }
 }
 
@@ -88,7 +93,8 @@ void receive(const MyMessage &message){
         }
       case 5:
         percent = message.getInt(); 
-        moisture_set = percent;
+        moisture_set = constrain(percent,moisture_low_limit,moisture_hi_limit);
+        delay(300);
         send(msgAO1.set(moisture_set));
         save_to_flash_after = millis() + 10000;
         save_to_flash_flag = true;
@@ -163,7 +169,7 @@ void loop(){
   }
 
   //test czujnika wilgotnosci gleby
-  if(bo_state[0] == false && (millis() - last_moisture_read) > 6000 ){
+  if(bo_state[0] == false && (millis() - last_moisture_read) > 1000 ){
     int moisture_percent = map(analogRead(ai1),670,277,0,100);
     moisture_percent = constrain(moisture_percent,0,100);
     moisture = ((moisture * 10) + moisture_percent) / 11; 
@@ -172,7 +178,7 @@ void loop(){
   }
   
   // raz na 5 minut wysyłka do domoticza i  wraazie potrzeby podlewanie
-  if(bo_state[0] == false && (millis() - last_moisture_send) > 300000 ){
+  if(bo_state[0] == false && (millis() - last_moisture_send) > 60000 ){
     send(msgAI1.set(moisture, 0));
     last_moisture_send = millis(); 
     // w tym miejscu podlewamy jeśli pomiar jest mniejszy niż nastawa %
