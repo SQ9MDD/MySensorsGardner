@@ -16,7 +16,7 @@
 #define CHILD_ID_BI1      2                                     // child ID for BI1 sensor tank low
 #define CHILD_ID_BI2      3                                     // child ID for BI2 sensor tank full 
 #define CHILD_ID_AI1      4                                     // child ID for AI1 sensor moisture mesure percentage
-#define CHILD_ID_AO1      5                                     // child ID for AO1 sensor moisture setpoint percentage
+#define CHILD_ID_AO1      5                                     // child ID for AO1 sensor moisture setpoint percentage 0% - 100%
 
 // mysensors config
 //#define MY_GATEWAY_SERIAL                                     // Enable serial gateway
@@ -156,7 +156,7 @@ void loop(){
     }
   }
 
-  // test plywaka gornego
+  // test plywaka gornego (opcja)
   if(digitalRead(bi2) != high_lvl){
     delay(10);
     if(digitalRead(bi2) != high_lvl){
