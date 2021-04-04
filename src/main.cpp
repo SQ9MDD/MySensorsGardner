@@ -18,16 +18,9 @@
 #define CHILD_ID_AI1      4                                     // child ID for AI1 sensor moisture mesure percentage
 #define CHILD_ID_AO1      5                                     // child ID for AO1 sensor moisture setpoint percentage 0% - 100%
 
-// mysensors config
-//#define MY_GATEWAY_SERIAL                                     // Enable serial gateway
-//#define MY_REPEATER_FEATURE                                   // Enabled repeater feature for this node
-#define MY_DEBUG                                                // Enable debug prints to serial monitor
-#define MY_RADIO_NRF24                                          // Enable and select radio type attached
-#define MY_RF24_CHANNEL 80                                      // mysensors network channel
-#define MY_NODE_ID 21                                           // mysensors node id
-//#define MY_TRANSPORT_WAIT_READY_MS 1000                       // pass if radio not ready
+// mysensors config, moved into platformio.ini
 
-boolean bo_state[2] = {false, false};
+boolean bo_state = false;
 boolean low_lvl = false;
 boolean high_lvl = false;
 boolean save_to_flash_flag = false;
@@ -53,7 +46,7 @@ MyMessage msgAO1(CHILD_ID_AO1, V_PERCENTAGE);
 
 void BO_SET() {
   if(low_lvl == false && moisture > moisture_low_limit && moisture < moisture_set){
-    bo_state[0] = true; 
+    bo_state = true; 
     bo1_start_time = millis(); 
     send(msgBO1.set(true,false));
     delay(100);
@@ -65,7 +58,7 @@ void BO_SET() {
 }
 
 void BO_RESET() {
-  bo_state[0] = false;
+  bo_state = false;
   digitalWrite(bo1, HIGH);
   delay(100);
   send(msgBO1.set(false,false));
@@ -142,7 +135,7 @@ void loop(){
   }
 
   // wylaczenie pompki po przepompowaniu dawki
-  if(bo_state[0] == true && (millis() - bo1_start_time) >= (impulse_time * impulse_ml)){
+  if(bo_state == true && (millis() - bo1_start_time) >= (impulse_time * impulse_ml)){
     BO_RESET();
   }
   
@@ -156,7 +149,7 @@ void loop(){
     }
   }
 
-  // test plywaka gornego (opcja)
+  // test plywaka gornego (opcjonalny czujnik)
   if(digitalRead(bi2) != high_lvl){
     delay(10);
     if(digitalRead(bi2) != high_lvl){
@@ -175,7 +168,7 @@ void loop(){
   }
 
   //test czujnika wilgotnosci gleby
-  if(bo_state[0] == false && (millis() - last_moisture_read) > 1000 ){
+  if(bo_state == false && (millis() - last_moisture_read) > 1000 ){
     int moisture_percent = map(analogRead(ai1),670,277,0,100);
     moisture_percent = constrain(moisture_percent,0,100);
     moisture = ((moisture * 10) + moisture_percent) / 11; 
@@ -184,7 +177,7 @@ void loop(){
   }
   
   // raz na 5 minut wysyłka do domoticza i  wrazie potrzeby podlewanie automatyczne
-  if(bo_state[0] == false && (millis() - last_moisture_send) > 300000 ){
+  if(bo_state == false && (millis() - last_moisture_send) > 300000 ){
     send(msgAI1.set(moisture, 0));
     last_moisture_send = millis(); 
     // w tym miejscu podlewamy jeśli pomiar jest mniejszy niż nastawa %
