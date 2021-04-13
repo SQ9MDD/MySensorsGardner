@@ -8,13 +8,11 @@
 // inputs and outputs
 #define bo1               3                                     // water pump 1
 #define bi1               A1                                    // water tank low lvl
-#define bi2               A2                                    // water tank high lvl
 #define bi3               4                                     // push button 
 #define ai1               A0                                    // soil moisture
 
 #define CHILD_ID_BO1      1                                     // child ID for BO1 sensor pump                            
 #define CHILD_ID_BI1      2                                     // child ID for BI1 sensor tank low
-#define CHILD_ID_BI2      3                                     // child ID for BI2 sensor tank full 
 #define CHILD_ID_AI1      4                                     // child ID for AI1 sensor moisture mesure percentage
 #define CHILD_ID_AO1      5                                     // child ID for AO1 sensor moisture setpoint percentage 0% - 100%
 
@@ -22,7 +20,6 @@
 
 boolean bo_state = false;
 boolean low_lvl = false;
-boolean high_lvl = false;
 boolean save_to_flash_flag = false;
 int moisture_low_limit = 10;
 int moisture_hi_limit = 80;
@@ -40,7 +37,6 @@ unsigned long save_to_flash_after = 0;                          // save settings
 
 MyMessage msgBO1(CHILD_ID_BO1, V_STATUS);
 MyMessage msgBI1(CHILD_ID_BI1, V_STATUS);
-MyMessage msgBI2(CHILD_ID_BI2, V_STATUS);
 MyMessage msgAI1(CHILD_ID_AI1, V_LEVEL);
 MyMessage msgAO1(CHILD_ID_AO1, V_PERCENTAGE);
 
@@ -70,7 +66,6 @@ void presentation(){
   int addr = MY_NODE_ID;  
   sprintf(etykieta,"R%02u.BO1",addr);   present(CHILD_ID_BO1, S_BINARY, etykieta); 
   sprintf(etykieta,"R%02u.BI1L",addr);  present(CHILD_ID_BI1, S_BINARY, etykieta);
-  sprintf(etykieta,"R%02u.BI2H",addr);  present(CHILD_ID_BI2, S_BINARY, etykieta); 
   sprintf(etykieta,"R%02u.AI1",addr);   present(CHILD_ID_AI1, S_MOISTURE, etykieta);   
   sprintf(etykieta,"R%02u.AO1",addr);   present(CHILD_ID_AO1, S_DIMMER, etykieta);
 }
@@ -100,15 +95,11 @@ void setup(){
   //analogReference(INTERNAL);
   pinMode(bo1,OUTPUT); digitalWrite(bo1, HIGH);
   pinMode(bi1,INPUT_PULLUP);
-  pinMode(bi2,INPUT_PULLUP);
   pinMode(bi3,INPUT_PULLUP);
   pinMode(ai1,INPUT);
 
   if(digitalRead(bi1) == LOW){
     low_lvl = true;
-  }
-  if(digitalRead(bi2) == LOW){
-    high_lvl = true;
   }
 
   int moisture_percent = map(analogRead(ai1),670,277,0,100);
@@ -121,7 +112,6 @@ void setup(){
 
   send(msgBO1.set(false,1));
   send(msgBI1.set(low_lvl,1));
-  send(msgBI2.set(high_lvl,1));
   send(msgAI1.set(moisture, 0));
   send(msgAO1.set(moisture_set, 0));
 }
@@ -146,16 +136,6 @@ void loop(){
       low_lvl = digitalRead(bi1); 
       boolean low_lvl_i = !low_lvl;
       send(msgBI1.set(low_lvl_i,1));
-    }
-  }
-
-  // test plywaka gornego (opcjonalny czujnik)
-  if(digitalRead(bi2) != high_lvl){
-    delay(10);
-    if(digitalRead(bi2) != high_lvl){
-      high_lvl = digitalRead(bi2); 
-      boolean high_lvl_i = !high_lvl;
-      send(msgBI2.set(high_lvl_i,1));
     }
   }
 
