@@ -1,7 +1,8 @@
-// Mysensors Gardner Project
-// sq9mdd@2021
-//
-// library
+// Copyright (c) 2021 SQ9MDD Rysiek Labus
+// 
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include <Arduino.h>
 #include <EEPROM.h>
 
